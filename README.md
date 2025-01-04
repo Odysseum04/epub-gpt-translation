@@ -13,7 +13,7 @@ The cost of translations is pretty low; here is the pricing as 04 january 2025 f
 $0.225 / 1M input tokens
 $0.600 / 1M output tokens
 
-The average web novel chapter contain about 2500 tokens (~9000 characters according to https://tokencounter.org/fr). Wich means that translating 400 chapters would cost you about 0.825€, a bit less than 1€.
+The average web novel chapter contain about 2500 tokens (~9000 characters according to https://tokencounter.org/fr). ### Wich means that translating 400 chapters would cost you about 0.825€, a bit less than 1€.
 
 ## 🛠️ Installation
 
