@@ -1,4 +1,4 @@
-# This repository is a fork of jb41/translate-book
+# 🌎 This repository is a fork of jb41/translate-book
 
 # Translate books with GPT
 
