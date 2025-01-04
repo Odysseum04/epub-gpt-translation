@@ -44,15 +44,16 @@ def split_html_by_sentence(html_str, max_chunk_size=10000):
 
 
 def system_prompt(from_lang, to_lang):
-    p  = "You are an %s-to-%s translator. " % (from_lang, to_lang)
-    p += "Keep all special characters and HTML tags as in the source text. Return only %s translation." % to_lang
+    p  = "You are an %s-to-%s specialized translator. " % (from_lang, to_lang)
+    p += "Keep all special characters and HTML tags as in the source text. Your translation should be in %s only." % to_lang
+    p += "Ensure the translation is comfortable to read by avoiding overly literal translations. Words or names that are untranslatable, such as fantasy names, should remain unchanged in the translation. Maintain readability and consistency with the source text."
     return p
 
 
-def translate_chunk(client, text, from_lang='EN', to_lang='PL'):
+def translate_chunk(client, text, from_lang='EN', to_lang='FR'):
     response = client.chat.completions.create(
-        model='gpt-4o',
-        temperature=0.2,
+        model='gpt-4o-mini',
+        temperature=0.3,
         messages=[
             { 'role': 'system', 'content': system_prompt(from_lang, to_lang) },
             { 'role': 'user', 'content': text },
@@ -63,7 +64,7 @@ def translate_chunk(client, text, from_lang='EN', to_lang='PL'):
     return translated_text
 
 
-def translate_text(client, text, from_lang='EN', to_lang='PL'):
+def translate_text(client, text, from_lang='EN', to_lang='FR'):
     translated_chunks = []
     chunks = split_html_by_sentence(text)
 
@@ -74,7 +75,7 @@ def translate_text(client, text, from_lang='EN', to_lang='PL'):
     return ' '.join(translated_chunks)
 
 
-def translate(client, input_epub_path, output_epub_path, from_chapter=0, to_chapter=9999, from_lang='EN', to_lang='PL'):
+def translate(client, input_epub_path, output_epub_path, from_chapter=0, to_chapter=9999, from_lang='EN', to_lang='FR'):
     book = epub.read_epub(input_epub_path)
 
     current_chapter = 1
@@ -124,7 +125,7 @@ if __name__ == "__main__":
     parser_translate.add_argument('--from-chapter', type=int, help='Starting chapter for translation.')
     parser_translate.add_argument('--to-chapter', type=int, help='Ending chapter for translation.')
     parser_translate.add_argument('--from-lang', help='Source language.', default='EN')
-    parser_translate.add_argument('--to-lang', help='Target language.', default='PL')
+    parser_translate.add_argument('--to-lang', help='Target language.', default='FR')
 
     # Create the parser for the "show-chapters" mode
     parser_show = subparsers.add_parser('show-chapters', help='Show the list of chapters.')
