@@ -52,7 +52,12 @@ git clone https://github.com/Odysseum04/novel-gpt-translation
 
 
 Now you can open the new folder inside novel-translation called: novel-gpt-translation inside Visual Studio Code
-![image](https://github.com/user-attachments/assets/36fc6508-f0bc-49dc-a808-52270eb1d766)
+![image](https://github.com/user-attachments/assets/6ed0c2a4-75b9-4eaf-8849-1f6831c10a7f)
+
+![image](https://github.com/user-attachments/assets/9d2120b2-56bd-48b0-9e01-5847b9781960)
+
+![image](https://github.com/user-attachments/assets/c376eb2d-74ed-4c53-a2af-7b10af2b5dbb)
+
 
 
 ### Remember to add your OpenAI key to `config.yaml.example`.
@@ -63,7 +68,8 @@ https://www.youtube.com/watch?v=nafDyRsVnXU&t=18s&ab_channel=TutorialsHubbyFuelY
 
 
 When you finished putting the Openai api key inside config.yaml.example, create a new terminal inside visual studio code.
-Use ctrl + shift + p or click on command bar in the upper area of visual studio code and type "create environment" to create a new venv environment.
+Use ctrl + shift + p and in the upper area of visual studio code and type "create environment" to create a new venv environment.
+![image](https://github.com/user-attachments/assets/a119c64b-3313-4bce-a644-8932e49f637a)
 
 
 When you finished putting the Openai api key inside config.yaml.example, create a new terminal inside visual studio code.
