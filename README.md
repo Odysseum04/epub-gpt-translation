@@ -71,7 +71,7 @@ Tutorial to get an api key:
 https://www.youtube.com/watch?v=nafDyRsVnXU&t=18s&ab_channel=TutorialsHubbyFuelYourDigital
 
 
-When you finished putting the Openai api key inside config.yaml.example, create a new terminal inside visual studio code.
+When you finished putting the Openai api key inside config.yaml.example,
 
 
 ### Use ctrl + shift + p and in the upper area of visual studio code and type "create environment" to create a new venv environment.
