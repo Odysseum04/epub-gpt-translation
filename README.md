@@ -6,7 +6,8 @@ This project harnesses the power of GPT-4o-mini LLM to translate eBooks from any
 
 This tool not only translates the text but also carefully compiles each element of the eBook – chapters, footnotes, and all – into a perfectly formatted EPUB file. We use the `gpt-4o-mini` model by default to ensure high-quality translations. However, we understand the need for flexibility, so we've made it easy to switch models in `main.py` according to your specific needs.
 
-## Cost
+
+## 💵 Cost
 
 The cost of translations is pretty low; here is the pricing as 04 january 2025 for gpt-4o-mini:
 
@@ -18,6 +19,7 @@ $0.600 per 1M output tokens
 
 The average web novel chapter contain about 2500 tokens (~9000 characters according to https://tokencounter.org/fr). 
 ### Wich means that translating 400 chapters would cost you about 0.825€, a bit less than 1€.
+
 
 ## 🛠️ Installation
 
