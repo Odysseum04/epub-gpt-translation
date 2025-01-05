@@ -32,7 +32,10 @@ Now go to your command invite (cmd) and use the following command:
 ```bash
 cd "THE TEXT YOU JUST COPIED"
 ```
+
+
 example: cd "C:\Users\cleme\OneDrive\Documents\novel-translation\"
+
 DO NOT forget to use the "".
 
 
