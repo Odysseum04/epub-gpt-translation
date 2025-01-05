@@ -52,6 +52,10 @@ git clone https://github.com/Odysseum04/novel-gpt-translation
 
 ### Remember to add your OpenAI key to `config.yaml.example`.
 
+Tutorial:
+https://www.youtube.com/watch?v=nafDyRsVnXU&t=18s&ab_channel=TutorialsHubbyFuelYourDigital
+
+
 ```bash
 pip install -r requirements.txt
 cp config.yaml.example config.yaml
