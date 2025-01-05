@@ -52,6 +52,7 @@ git clone https://github.com/Odysseum04/novel-gpt-translation
 
 
 Now you can open the new folder inside novel-translation called: novel-gpt-translation inside Visual Studio Code
+![image](https://github.com/user-attachments/assets/36fc6508-f0bc-49dc-a808-52270eb1d766)
 
 
 ### Remember to add your OpenAI key to `config.yaml.example`.
