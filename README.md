@@ -21,9 +21,22 @@ The average web novel chapter contain about 2500 tokens (~9000 characters accord
 ### Wich means that translating 400 chapters would cost you about 0.825€, a bit less than 1€.
 
 
-## 🛠️ Installation
+## 🛠️ Installation on Windows
 
-To install the necessary components for our project, follow these simple steps:
+Please create a new folder on you machine (I recommend going to your documents forlder and creating a new folder called "novel-translation")
+Now go in the search bar of your file browser and copy the way to the folder;
+mine looked like this: C:\Users\cleme\OneDrive\Documents\novel-translation\
+
+Now go to your command invite (cmd) and use the following command:
+
+```bash
+cd "C:\Users\YOURUSERNAME\OneDrive\Documents\novel-translation\"
+```
+
+DO NOT forget to use the "".
+
+
+To install the necessary components for the project, follow these simple steps:
 
 ```bash
 git clone https://github.com/Odysseum04/novel-gpt-translation
