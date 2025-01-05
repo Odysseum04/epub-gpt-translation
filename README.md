@@ -54,13 +54,12 @@ git clone https://github.com/Odysseum04/novel-gpt-translation
 Now you can open the new folder inside novel-translation called: novel-gpt-translation inside Visual Studio Code
 ![image](https://github.com/user-attachments/assets/6ed0c2a4-75b9-4eaf-8849-1f6831c10a7f)
 
-![image](https://github.com/user-attachments/assets/9d2120b2-56bd-48b0-9e01-5847b9781960)
-
 ![image](https://github.com/user-attachments/assets/c376eb2d-74ed-4c53-a2af-7b10af2b5dbb)
 
 
 
 ### Remember to add your OpenAI key to `config.yaml.example`.
+![image](https://github.com/user-attachments/assets/9d2120b2-56bd-48b0-9e01-5847b9781960)
 
 
 Tutorial to get an api key:
@@ -73,6 +72,9 @@ Use ctrl + shift + p and in the upper area of visual studio code and type "creat
 
 
 When you finished putting the Openai api key inside config.yaml.example, create a new terminal inside visual studio code.
+![image](https://github.com/user-attachments/assets/a09763a7-115b-4782-b24b-c630d5e8d3f4)
+
+
 Now in the terminal:
 ```bash
 pip install -r requirements.txt
