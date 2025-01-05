@@ -72,7 +72,7 @@ https://www.youtube.com/watch?v=nafDyRsVnXU&t=18s&ab_channel=TutorialsHubbyFuelY
 
 
 
-### Use ctrl + shift + p and in the upper area of visual studio code and type "create environment" to create a new venv environment.
+### Now use ctrl + shift + p and in the upper area of visual studio code and type "create environment" to create a new venv environment.
 ![image](https://github.com/user-attachments/assets/a119c64b-3313-4bce-a644-8932e49f637a)
 ![image](https://github.com/user-attachments/assets/6ac17cf3-8b21-4c80-b61c-8749b0ba6b79)
 
