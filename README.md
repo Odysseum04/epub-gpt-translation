@@ -26,6 +26,8 @@ The average web novel chapter contain about 2500 tokens (~9000 characters accord
 Please create a new folder on you machine (I recommend going to your documents forlder and creating a new folder called "novel-translation")
 Now go in the search bar of your file browser and copy the way to the folder;
 mine looked like this: C:\Users\cleme\OneDrive\Documents\novel-translation\
+![image](https://github.com/user-attachments/assets/c8a055d3-40c8-40eb-bf75-142e3ef80924)
+
 
 Now go to your command invite (cmd) and use the following command:
 
@@ -34,7 +36,8 @@ cd "THE TEXT YOU JUST COPIED"
 ```
 
 
-example: cd "C:\Users\cleme\OneDrive\Documents\novel-translation\"
+Example: ![image](https://github.com/user-attachments/assets/df074010-a5b2-4d40-9aca-6661654a6919)
+
 
 DO NOT forget to use the "".
 
