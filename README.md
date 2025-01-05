@@ -42,16 +42,17 @@ Example: ![image](https://github.com/user-attachments/assets/df074010-a5b2-4d40-
 ### DO NOT forget to use the "".
 
 
-
-
-To install the necessary components for the project, follow these simple steps:
+Now use this command in your terminal:
 
 ```bash
 git clone https://github.com/Odysseum04/novel-gpt-translation
 ```
 
 
-Now you can open the new folder inside novel-translation called: novel-gpt-translation inside Visual Studio Code
+There is now a new folder inside novel-translation called novel-gpt-translation.
+
+
+Open this forlder inside Visual Studio Code:
 ![image](https://github.com/user-attachments/assets/6ed0c2a4-75b9-4eaf-8849-1f6831c10a7f)
 
 ![image](https://github.com/user-attachments/assets/c376eb2d-74ed-4c53-a2af-7b10af2b5dbb)
