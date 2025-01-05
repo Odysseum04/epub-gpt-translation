@@ -30,9 +30,9 @@ mine looked like this: C:\Users\cleme\OneDrive\Documents\novel-translation\
 Now go to your command invite (cmd) and use the following command:
 
 ```bash
-cd "C:\Users\YOURUSERNAME\OneDrive\Documents\novel-translation\"
+cd "THE TEXT YOU JUST COPIED"
 ```
-
+example: cd "C:\Users\cleme\OneDrive\Documents\novel-translation\"
 DO NOT forget to use the "".
 
 
