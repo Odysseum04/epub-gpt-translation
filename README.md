@@ -2,21 +2,21 @@
 
 # Translate books with GPT
 
-This project harnesses the power of Large Language Models (LLMs) like GPT-4o-mini to translate eBooks from any language into your preferred language, maintaining the integrity and structure of the original content. Imagine having access to a vast world of literature, regardless of the original language, right at your fingertips.
+This project harnesses the power of Large Language Models (LLMs) like GPT-4.1-mini to translate eBooks from any language into your preferred language, maintaining the integrity and structure of the original content. Imagine having access to a vast world of literature, regardless of the original language, right at your fingertips.
 
-This tool not only translates the text but also carefully reassembles each element of the eBook – chapters, footnotes, and all – into a perfectly formatted EPUB file. We use `gpt-4o-mini` by default for a good balance of quality and cost, but you can easily change the model and other settings in the `config.yaml` file.
+This tool not only translates the text but also carefully reassembles each element of the eBook – chapters, footnotes, and all – into a perfectly formatted EPUB file. We use `gpt-4.1-mini` by default for a good balance of quality and cost, but you can easily change the model and other settings in the `config.yaml` file.
 
 ## 💵 Cost
 
-The cost of translations using models like `gpt-4o-mini` is generally quite low. For indicative pricing (please always check OpenAI's official pricing page for the latest rates, for example, as of mid-2024 for `gpt-4o-mini`):
+The cost of translations using models like `gpt-4.1-mini` is generally quite low. For indicative pricing (please always check OpenAI's official pricing page for the latest rates, for example, as of mid-2025 for `gpt-4.1-mini`):
 
 ```
-Input: ~$0.15 per 1 million tokens
-Output: ~$0.60 per 1 million tokens
+Input: ~$0.50 per 1 million tokens
+Output: ~$1.60 per 1 million tokens
 ```
 
 An average web novel chapter might contain about 2500 tokens (around 9000 characters).
-**This means translating a book with 400 such chapters could cost you less than $1 USD.** (Calculation: 400 chapters * 2500 tokens/chapter = 1M input tokens. Assuming output is similar, total cost would be around $0.15 + $0.60 = $0.75).
+**This means translating a book with 400 such chapters could cost you less than $3 USD.** (Calculation: 400 chapters * 2500 tokens/chapter = 1M input tokens. Assuming output is similar, total cost would be around $0.50 + $1.60 = $2.10).
 
 ## 🛠️ Installation
 
@@ -110,7 +110,7 @@ The script will provide progress updates in the terminal as it processes and tra
 ### Advanced Configuration
 
 You can fine-tune the translation process by editing the `config.yaml` file. Settings you can change include:
-*   OpenAI model (e.g., `gpt-4o-mini`, `gpt-4-turbo`)
+*   OpenAI model (e.g., `gpt-4.1-mini`, `gpt-4-turbo`)
 *   Translation temperature (creativity vs. precision)
 *   Maximum tokens per chunk sent to the API
 *   Retry attempts for API calls
