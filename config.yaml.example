@@ -1,2 +1,24 @@
+# config.yaml (Example)
+# Place this file in the same directory as the script or specify its path with --config
+
 openai:
-    api_key: "YOUR_OPENAI_API_KEY_SEE_ONLINE_TUTORIAL"
+  # api_key: "sk-your-openai-api-key-here" # Best to use OPENAI_API_KEY environment variable
+  model: "gpt-4o-mini" # Or other models like "gpt-4-turbo", "gpt-3.5-turbo"
+  temperature: 0.3     # Lower for more deterministic, higher for more creative
+  max_tokens_per_chunk: 1500 # Adjust based on model's context window and typical sentence length.
+                           # GPT-4o-mini has a large context, but smaller chunks can be faster/cheaper.
+  request_timeout: 120   # Timeout for OpenAI API requests in seconds
+
+translation_settings:
+  retries: 3               # Number of retries for failed API calls
+  retry_delay_seconds: 15  # Base delay in seconds for retries
+
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# To use, save this as config.yaml or similar and run:
+# python your_script_name.py translate --input mybook.epub --output mybook_translated.epub --from-lang en --to-lang es
+#
+# Or to show chapters:
+# python your_script_name.py show-chapters --input mybook.epub
