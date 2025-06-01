@@ -30,10 +30,10 @@ except ImportError:
 DEFAULT_CONFIG = {
     "openai": {
         "api_key": None, # Placeholder, should be set via ENV or actual config file
-        "model": "gpt-4o-mini",
-        "temperature": 0.3,
-        "max_tokens_per_chunk": 1500, # Based on GPT-4o-mini's context, leaving room for prompt and completion
-        "request_timeout": 60, # Seconds
+        "model": "gpt-4.1-mini",
+        "temperature": 0.4,
+        "max_tokens_per_chunk": 16384, # Based on GPT-4.1-mini's context is 32768. Leaving room for prompt and completion
+        "request_timeout": 120, # Seconds
     },
     "translation_settings": {
         "retries": 3,
