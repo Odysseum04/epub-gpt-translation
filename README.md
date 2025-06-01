@@ -1,9 +1,3 @@
-Okay, I've updated the `README.md` to reflect the changes in the Python script and to keep the instructions clear and simple for users.
-
-Here's the revised `README.md`:
-
---- START OF FILE README.md ---
-
 # 🌎 This repository is a fork of jb41/translate-book
 
 # Translate books with GPT
@@ -124,5 +118,3 @@ You can fine-tune the translation process by editing the `config.yaml` file. Set
 
 ## 🤝 Source
 This repository is a fork of [jb41/translate-book](https://github.com/jb41/translate-book). Don't forget to thank the original author by starring their GitHub repo too! The current, reworked version of the script aims to be robust and user-friendly.
-
---- END OF FILE README.md ---
