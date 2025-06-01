@@ -42,7 +42,7 @@ Follow these steps to get the translator up and running on your computer:
     This will create a new folder named `epub-gpt-translation` inside your project directory.
 
 4.  **Open the Project:**
-    Open the `novel-gpt-translation` folder in your favorite code editor (like VS Code, PyCharm, Sublime Text, etc.).
+    Open the `epub-gpt-translation` folder in your favorite code editor (like VS Code, PyCharm, Sublime Text, etc.).
 
 5.  **Set up Configuration & API Key:**
     *   Inside the `epub-gpt-translation` folder, find the file named `config.yaml.example`.
