@@ -57,7 +57,7 @@ Follow these steps to get the translator up and running on your computer:
     *   **Alternatively (Recommended & More Secure):** Instead of putting the key in `config.yaml`, you can set an environment variable named `OPENAI_API_KEY` with your key value. The script will automatically use it if set.
 
 6.  **Create a Python Virtual Environment (Highly Recommended):**
-    A virtual environment keeps project dependencies isolated. In your terminal (ensure you are inside the `novel-gpt-translation` folder):
+    A virtual environment keeps project dependencies isolated. In your terminal (ensure you are inside the `epub-gpt-translation` folder):
     ```bash
     python -m venv .venv 
     ```
@@ -84,7 +84,7 @@ The script is run from the terminal, inside the `epub-gpt-translation` folder (m
 
 Before translating, it's a good idea to see how the book is structured:
 ```bash
-python main.py show-chapters --input yourbook.epub
+python main.py show-chapters --input "yourbook.epub"
 ```
 This command lists the chapters (or document items) in your EPUB file, their approximate size, and a short preview. This helps you decide if you want to translate specific chapters.
 
@@ -92,7 +92,7 @@ This command lists the chapters (or document items) in your EPUB file, their app
 
 To translate a book:
 ```bash
-python main.py translate --input yourbook.epub --output translatedbook.epub --from-lang EN --to-lang FR --from-chapter 1 --to-chapter 5
+python main.py translate --input "yourbook.epub" --output "translatedbook.epub" --from-lang EN --to-lang FR --from-chapter 1 --to-chapter 999
 ```
 
 **Explanation of options:**
