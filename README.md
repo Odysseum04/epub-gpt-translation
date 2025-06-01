@@ -28,24 +28,24 @@ Follow these steps to get the translator up and running on your computer:
 2.  **Open a Terminal (Command Prompt/PowerShell/Terminal):**
     *   **Windows:** Search for "cmd" or "PowerShell".
     *   **macOS/Linux:** Search for "Terminal".
-    Navigate to the folder you just created. If your folder path is `C:\Users\YourName\Documents\novel-translation`, you would type:
+    Navigate to the folder you just created. If your folder path is `C:\Users\YourName\Documents\epub-translation`, you would type:
     ```bash
-    cd "C:\Users\YourName\Documents\novel-translation"
+    cd "C:\Users\YourName\Documents\epub-translation"
     ```
     *(Remember the quotes if your path has spaces!)*
 
 3.  **Clone the Repository:**
     In the terminal, run this command to download the project files:
     ```bash
-    git clone https://github.com/Odysseum04/novel-gpt-translation
+    git clone https://github.com/Odysseum04/epub-gpt-translation.git
     ```
-    This will create a new folder named `novel-gpt-translation` inside your project directory.
+    This will create a new folder named `epub-gpt-translation` inside your project directory.
 
 4.  **Open the Project:**
     Open the `novel-gpt-translation` folder in your favorite code editor (like VS Code, PyCharm, Sublime Text, etc.).
 
 5.  **Set up Configuration & API Key:**
-    *   Inside the `novel-gpt-translation` folder, find the file named `config.yaml.example`.
+    *   Inside the `epub-gpt-translation` folder, find the file named `config.yaml.example`.
     *   **Copy this file and rename the copy to `config.yaml`** in the same directory.
     *   **Open `config.yaml` with your editor.** You'll need to add your OpenAI API key here:
         ```yaml
@@ -78,7 +78,7 @@ You're all set up!
 
 ## 🎮 Usage
 
-The script is run from the terminal, inside the `novel-gpt-translation` folder (make sure your virtual environment is activated).
+The script is run from the terminal, inside the `epub-gpt-translation` folder (make sure your virtual environment is activated).
 
 ### Show Chapters
 
