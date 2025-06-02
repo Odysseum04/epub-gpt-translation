@@ -6,7 +6,7 @@ openai:
   model: "gpt-4.1-mini" # Or other models like "gpt-4-turbo", "gpt-3.5-turbo"
   temperature: 0.4     # Lower for more deterministic, higher for more creative
   max_tokens_per_chunk: 16384 # Adjust based on model's context window and typical sentence length.
-  request_timeout: 120   # Timeout for OpenAI API requests in seconds
+  request_timeout: 1200   # Timeout for OpenAI API requests in seconds
 
 translation_settings:
   retries: 3               # Number of retries for failed API calls
