@@ -32,7 +32,7 @@ DEFAULT_CONFIG = {
         # CRITICAL FOR THIS STRATEGY: Increase this significantly in your config.yaml!
         # e.g., 16000, 32000, or higher, up to model limits minus prompt/output.
         "max_tokens_per_chunk": 16000, # Default is low for this strategy.
-        "request_timeout": 180, # Increased default timeout for potentially larger payloads
+        "request_timeout": 1200, # Increased default timeout for potentially larger payloads
     },
     "translation_settings": {
         "retries": 3,
