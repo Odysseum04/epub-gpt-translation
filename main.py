@@ -10,15 +10,15 @@ from typing import List, Dict, Any, Optional, Callable
 # External Libraries (ensure these are in requirements.txt)
 import ebooklib
 from ebooklib import epub
-from bs4 import BeautifulSoup, NavigableString
+from bs4 import BeautifulSoup # NavigableString might not be directly used now
 from openai import OpenAI, APIError, RateLimitError, AuthenticationError
 import tiktoken
 from tqdm import tqdm
 
-# Attempt to import NLTK, but make it optional for basic sentence splitting
+# Attempt to import NLTK (kept for now, but not used in this translation strategy)
 try:
     import nltk
-    SENTENCE_TOKENIZER_AVAILABLE = True
+    SENTENCE_TOKENIZER_AVAILABLE = True # Variable kept for consistency
 except ImportError:
     nltk = None
     SENTENCE_TOKENIZER_AVAILABLE = False
@@ -29,12 +29,14 @@ DEFAULT_CONFIG = {
         "api_key": None, 
         "model": "gpt-4o-mini", 
         "temperature": 0.4,
-        "max_tokens_per_chunk": 4000,
-        "request_timeout": 120, 
+        # CRITICAL FOR THIS STRATEGY: Increase this significantly in your config.yaml!
+        # e.g., 16000, 32000, or higher, up to model limits minus prompt/output.
+        "max_tokens_per_chunk": 4000, # Default is low for this strategy.
+        "request_timeout": 180, # Increased default timeout for potentially larger payloads
     },
     "translation_settings": {
         "retries": 3,
-        "retry_delay_seconds": 10
+        "retry_delay_seconds": 15 # Increased delay for potentially larger retries
     },
     "logging": {
         "level": "INFO",
@@ -48,7 +50,7 @@ logger = logging.getLogger(__name__)
 # --- Helper Functions ---
 
 def setup_logging(config: Dict[str, Any]) -> None:
-    """Sets up global logging and ensures NLTK 'punkt' and 'punkt_tab' are available."""
+    """Sets up global logging and NLTK (though NLTK not used in this strategy)."""
     log_config = config.get("logging", DEFAULT_CONFIG["logging"])
     level_str = log_config.get("level", "INFO").upper()
     level = getattr(logging, level_str, logging.INFO)
@@ -56,41 +58,28 @@ def setup_logging(config: Dict[str, Any]) -> None:
     logging.basicConfig(level=level, format=log_format, stream=sys.stdout, force=True)
     logger.info(f"Logging configured to level: {level_str}")
 
-    # Silence INFO logs from httpx and httpcore for cleaner output
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
 
     if not SENTENCE_TOKENIZER_AVAILABLE:
-        logger.warning("NLTK library not found. Falling back to basic regex-based sentence splitting. "
-                       "For better sentence tokenization, please install NLTK: pip install nltk")
+        logger.debug("NLTK library not found (not critical for current large-block strategy).")
     elif nltk:
-        resources_to_download = ['punkt']
-        # Since 'punkt_tab' worked for you with nltk.download('punkt_tab'),
-        # we can add it if it's a recognized standalone download identifier by NLTK.
-        # Typically, 'punkt' should cover its components.
-        # Let's try 'punkt' first, as it's the main package.
-        # If 'punkt_tab' is a separate entity NLTK's downloader recognizes, it can be added.
-        # For now, focusing on 'punkt' as the primary resource.
-        # If specific 'punkt_tab' issues persist, one might consider adding 'punkt_tab' to resources_to_download.
+        logger.debug("NLTK library found (not actively used for sentence tokenization in current large-block strategy).")
+        # NLTK punkt download attempt (kept for completeness, harmless if not used)
+        # resources_to_download = ['punkt']
+        # for resource_name in resources_to_download:
+        #     try:
+        #         nltk.data.find(f'tokenizers/{resource_name}')
+        #         logger.debug(f"NLTK resource '{resource_name}' found.")
+        #     except nltk.downloader.DownloadError: 
+        #         logger.info(f"NLTK resource '{resource_name}' not found. Attempting download (quietly)...")
+        #         try:
+        #             nltk.download(resource_name, quiet=True) 
+        #             nltk.data.find(f'tokenizers/{resource_name}')
+        #             logger.info(f"NLTK resource '{resource_name}' is now available after download attempt.")
+        #         except Exception: # Catch all for download/find issues
+        #             logger.warning(f"Could not download/verify NLTK resource '{resource_name}'.")
 
-        for resource_name in resources_to_download:
-            try:
-                # Check if the primary resource directory exists
-                # For 'punkt', this is 'tokenizers/punkt'
-                nltk.data.find(f'tokenizers/{resource_name}')
-                logger.info(f"NLTK resource '{resource_name}' found.")
-            except nltk.downloader.DownloadError: 
-                logger.warning(f"NLTK resource '{resource_name}' not found. Attempting download...")
-                try:
-                    nltk.download(resource_name, quiet=False) 
-                    nltk.data.find(f'tokenizers/{resource_name}') # Verify again
-                    logger.info(f"NLTK resource '{resource_name}' is now available after download attempt.")
-                except Exception as e_nltk_dl:
-                    logger.error(f"Failed to download or verify NLTK resource '{resource_name}': {e_nltk_dl}. "
-                                 "NLTK sentence tokenization might be impaired.")
-            except Exception as e_nltk_find:
-                 logger.error(f"An error occurred while checking for NLTK resource '{resource_name}': {e_nltk_find}. "
-                              "NLTK sentence tokenization might be impaired.")
 
 def read_config(config_file: str) -> Dict[str, Any]:
     """Reads a YAML configuration file, merges with defaults, and returns its contents."""
@@ -119,155 +108,34 @@ def count_tokens(text: str, model: str) -> int:
         encoding = tiktoken.encoding_for_model(model)
     except KeyError:
         logger.error(f"TIKTOKEN ERROR: Model '{model}' not found by tiktoken. "
-                     f"This means token counting will be inaccurate and API calls with this model name WILL LIKELY FAIL. "
-                     f"Please use a valid OpenAI model name (e.g., 'gpt-4o-mini'). "
-                     f"Falling back to 'cl100k_base' for token counting, but this is NOT a fix for the API model name.")
+                     f"Token counting will be inaccurate; API calls with this model name WILL LIKELY FAIL. "
+                     f"Use a valid OpenAI model name (e.g., 'gpt-4o-mini'). "
+                     f"Falling back to 'cl100k_base' for token counting (NOT a fix for API model name).")
         encoding = tiktoken.get_encoding("cl100k_base")
     return len(encoding.encode(text))
-
-def _nltk_sentence_tokenize(text: str, language: str = 'english') -> List[str]:
-    """Tokenizes text into sentences using NLTK. Assumes 'punkt' resources are available."""
-    if not nltk or not SENTENCE_TOKENIZER_AVAILABLE:
-        logger.error("NLTK sentence tokenizer called directly but NLTK is not available. Falling back to regex.")
-        return _regex_sentence_tokenize(text)
-    try:
-        return nltk.tokenize.sent_tokenize(text, language=language)
-    except LookupError as e_lookup: 
-        logger.error(f"NLTK LookupError during sentence tokenization for language '{language}': {e_lookup}. "
-                     f"This might mean 'punkt' or its language-specific resources are still missing "
-                     "despite download attempts in setup_logging. Falling back to regex.")
-        return _regex_sentence_tokenize(text)
-    except Exception as e:
-        logger.error(f"Unexpected error during NLTK sentence tokenization: {e}. Falling back to regex.", exc_info=True)
-        return _regex_sentence_tokenize(text)
-
-def _regex_sentence_tokenize(text: str) -> List[str]:
-    """Basic regex-based sentence splitter."""
-    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<![A-Z]\.)(?<=\.|\?|!)\s+', text)
-    return [s.strip() for s in sentences if s.strip()]
-
-def get_sentence_tokenizer(language_code: str) -> Callable[[str], List[str]]:
-    """Returns the best available sentence tokenizer."""
-    if nltk and SENTENCE_TOKENIZER_AVAILABLE:
-        lang_map = {
-            'en': 'english', 'es': 'spanish', 'fr': 'french', 'de': 'german',
-            'it': 'italian', 'pt': 'portuguese', 'nl': 'dutch', 'ru': 'russian'
-        }
-        nltk_lang = lang_map.get(language_code.lower(), 'english')
-        try:
-            _nltk_sentence_tokenize("Test sentence.", language=nltk_lang) 
-            logger.debug(f"Using NLTK sentence tokenizer for language: {nltk_lang}") # Changed to DEBUG
-            return lambda text: _nltk_sentence_tokenize(text, language=nltk_lang)
-        except Exception as e_test: 
-            logger.warning(f"NLTK tokenizer test for '{nltk_lang}' failed ({e_test}). Defaulting to English NLTK or regex.")
-            try:
-                _nltk_sentence_tokenize("Test sentence.", language='english')
-                logger.debug("Using NLTK sentence tokenizer for language: english (fallback)") # Changed to DEBUG
-                return lambda text: _nltk_sentence_tokenize(text, language='english')
-            except Exception as e_eng_test:
-                logger.error(f"NLTK English tokenizer also failed test ({e_eng_test}). Falling back to regex for all tokenization.")
-    
-    logger.debug("Using regex-based sentence tokenizer (NLTK not available, not configured for language, or 'punkt' resources missing).") # Changed to DEBUG
-    return _regex_sentence_tokenize
-
-def split_plain_text_into_chunks(text: str, max_tokens: int, model_name: str, from_lang_code: str) -> List[str]:
-    """Splits plain text into chunks by sentences, keeping each chunk below max_tokens."""
-    logger.debug(f"split_plain_text_into_chunks: Input text: '{text[:150]}...'")
-    if not text.strip():
-        logger.debug("split_plain_text_into_chunks: Input text is empty or whitespace. Returning empty list.")
-        return []
-
-    sentence_tokenizer = get_sentence_tokenizer(from_lang_code)
-    # Determine tokenizer name for logging (best effort)
-    tokenizer_name_for_log = "selected tokenizer"
-    if hasattr(sentence_tokenizer, '__name__'):
-        tokenizer_name_for_log = sentence_tokenizer.__name__
-    elif hasattr(sentence_tokenizer, 'func') and hasattr(sentence_tokenizer.func, '__name__'): # For lambdas
-        tokenizer_name_for_log = sentence_tokenizer.func.__name__
-
-
-    sentences = sentence_tokenizer(text)
-    logger.debug(f"split_plain_text_into_chunks: Found {len(sentences)} sentences using {tokenizer_name_for_log}. First three: {sentences[:3]}")
-    
-    chunks = []
-    current_chunk_sentences = []
-    current_chunk_tokens = 0
-
-    for i, sentence in enumerate(sentences):
-        logger.debug(f"  Processing sentence {i+1}/{len(sentences)}: '{sentence[:70]}...'")
-        sentence_tokens = count_tokens(sentence, model_name)
-        logger.debug(f"    Sentence tokens: {sentence_tokens}")
-        
-        if sentence_tokens == 0 and not sentence.strip():
-            logger.debug(f"    Skipping empty sentence.")
-            continue
-
-        if sentence_tokens > max_tokens:
-            logger.warning(f"A single sentence exceeds max_tokens ({sentence_tokens}/{max_tokens}). Splitting it: '{sentence[:50]}...'")
-            words = sentence.split()
-            temp_sentence_part = ""
-            for word_idx, word in enumerate(words):
-                next_part = temp_sentence_part + (" " if temp_sentence_part else "") + word
-                if count_tokens(next_part, model_name) <= max_tokens:
-                    temp_sentence_part = next_part
-                else:
-                    if temp_sentence_part:
-                        logger.debug(f"    Adding oversized sentence part (fit): '{temp_sentence_part[:50]}...' (tokens: {count_tokens(temp_sentence_part, model_name)})")
-                        chunks.append(temp_sentence_part)
-                    temp_sentence_part = word
-                    if count_tokens(temp_sentence_part, model_name) > max_tokens:
-                        logger.error(f"A single word is too long for token limit after trying to split sentence: '{word[:50]}...'. Skipping this word.")
-                        temp_sentence_part = "" 
-            if temp_sentence_part:
-                logger.debug(f"    Adding final oversized sentence part: '{temp_sentence_part[:50]}...' (tokens: {count_tokens(temp_sentence_part, model_name)})")
-                chunks.append(temp_sentence_part)
-            current_chunk_sentences = []
-            current_chunk_tokens = 0
-            continue
-
-        if current_chunk_tokens + sentence_tokens <= max_tokens:
-            current_chunk_sentences.append(sentence)
-            current_chunk_tokens += sentence_tokens
-            logger.debug(f"    Added sentence to current chunk. New chunk tokens: {current_chunk_tokens}")
-        else:
-            if current_chunk_sentences:
-                chunks.append(" ".join(current_chunk_sentences))
-                logger.debug(f"    Finalized chunk ({len(current_chunk_sentences)} sentences). Total chunks: {len(chunks)}")
-            current_chunk_sentences = [sentence]
-            current_chunk_tokens = sentence_tokens
-            logger.debug(f"    Started new chunk with sentence. Chunk tokens: {current_chunk_tokens}")
-
-    if current_chunk_sentences:
-        chunks.append(" ".join(current_chunk_sentences))
-        logger.debug(f"    Finalized last chunk ({len(current_chunk_sentences)} sentences). Total chunks: {len(chunks)}")
-        
-    final_chunks = [chunk for chunk in chunks if chunk.strip()]
-    logger.debug(f"split_plain_text_into_chunks: Generated {len(final_chunks)} final non-empty chunks.")
-    return final_chunks
 
 def system_prompt(from_lang: str, to_lang: str) -> str:
     """Generates a system prompt for the translation task."""
     return (
         f"You are an expert {from_lang}-to-{to_lang} translator. "
-        f"Translate the given text accurately and naturally. "
-        f"Preserve the original meaning, tone, and context. "
-        f"Maintain consistency with the source text. "
+        f"Translate ONLY the human-readable text content within the provided HTML. "
+        f"PRESERVE ALL HTML TAGS AND THEIR ATTRIBUTES EXACTLY AS THEY ARE IN THE ORIGINAL. "
+        f"Do not add, remove, or modify any HTML tags or attributes. "
+        f"Do not translate content of attributes like 'class', 'id', 'href', 'src'. "
+        f"Ensure the output is valid HTML with translated text content. "
         f"Your translation should be in {to_lang} only. "
-        f"IMPORTANT: If the input text contains HTML tags (like <b>, <i>, <span>, etc.), "
-        f"reproduce these tags exactly as they are in the translated output, "
-        f"wrapping the corresponding translated text. Do not translate the content of HTML attributes "
-        f"like 'class' or 'id'. Only translate the text content."
+        f"Maintain the original meaning, tone, and context of the text."
     )
 
-def translate_single_text_chunk(
-    client: OpenAI, text_chunk: str, from_lang: str, to_lang: str, config: Dict[str, Any]
+def translate_single_text_chunk( # Renamed from translate_single_text_chunk for clarity, now handles HTML blocks
+    client: OpenAI, html_block_to_translate: str, from_lang: str, to_lang: str, config: Dict[str, Any]
 ) -> Optional[str]:
-    """Translates a single text chunk using OpenAI API with retries."""
+    """Translates a single block of (potentially HTML) text using OpenAI API with retries."""
     openai_config = config.get("openai", DEFAULT_CONFIG["openai"])
     translation_config = config.get("translation_settings", DEFAULT_CONFIG["translation_settings"])
     
     model_to_use = openai_config["model"]
-    logger.debug(f"translate_single_text_chunk: Attempting to translate chunk using OpenAI model: '{model_to_use}'. Chunk: '{text_chunk[:100]}...'")
+    logger.debug(f"translate_single_html_block: Attempting to translate block using OpenAI model: '{model_to_use}'. Block (first 150 chars): '{html_block_to_translate[:150]}...'")
 
     for attempt in range(translation_config["retries"]):
         try:
@@ -277,16 +145,18 @@ def translate_single_text_chunk(
                 temperature=openai_config["temperature"],
                 messages=[
                     {'role': 'system', 'content': system_prompt(from_lang, to_lang)},
-                    {'role': 'user', 'content': text_chunk},
+                    {'role': 'user', 'content': html_block_to_translate}, # Sending the HTML block
                 ],
-                timeout=openai_config.get("request_timeout", 60)
+                timeout=openai_config.get("request_timeout", DEFAULT_CONFIG["openai"]["request_timeout"])
             )
             translated_text = response.choices[0].message.content
-            logger.debug(f"  API Call Success. Raw translated_text: '{translated_text[:100] if translated_text else 'EMPTY_RESPONSE'}'")
+            logger.debug(f"  API Call Success. Raw translated response (first 150 chars): '{translated_text[:150] if translated_text else 'EMPTY_RESPONSE'}'")
             if translated_text:
-                return translated_text.strip()
+                # We expect the LLM to return valid HTML with translated text.
+                # No .strip() here, as whitespace might be significant in HTML structure.
+                return translated_text 
             else:
-                logger.warning(f"Received empty translation from API for chunk: '{text_chunk[:50]}...'")
+                logger.warning(f"Received empty translation from API for HTML block: '{html_block_to_translate[:70]}...'")
                 return "" 
         except RateLimitError as e:
             logger.warning(f"Rate limit exceeded (attempt {attempt + 1}/{translation_config['retries']}). Retrying in {translation_config['retry_delay_seconds'] * (attempt + 1)}s... Error: {e}")
@@ -296,122 +166,126 @@ def translate_single_text_chunk(
                 logger.error(f"FATAL OpenAI API Error: Model '{model_to_use}' likely does not exist or you do not have access. "
                              f"Please check the model name in your configuration. Error: {e}", exc_info=True)
                 return None 
+            # Check for context length exceeded errors
+            if "context_length_exceeded" in str(e).lower() or "maximum context length" in str(e).lower():
+                logger.error(f"OpenAI API Error: Model '{model_to_use}' context length exceeded. "
+                             f"The HTML block sent was too large for the model's input capacity. Error: {e}", exc_info=True)
+                return None # Don't retry if context length is the issue for this block
             logger.error(f"OpenAI API error (attempt {attempt + 1}/{translation_config['retries']}): {e}. Retrying...", exc_info=True)
             time.sleep(translation_config['retry_delay_seconds'])
         except AuthenticationError as e: 
-            logger.error(f"OpenAI Authentication Error: {e}. Please check your API key and organization. Halting translation for this chunk.", exc_info=True)
+            logger.error(f"OpenAI Authentication Error: {e}. Please check your API key and organization. Halting translation for this block.", exc_info=True)
             return None 
         except Exception as e: 
             logger.error(f"An unexpected error occurred during translation (attempt {attempt + 1}/{translation_config['retries']}): {e}", exc_info=True)
             time.sleep(translation_config['retry_delay_seconds'])
     
-    logger.error(f"Failed to translate chunk after {translation_config['retries']} retries: '{text_chunk[:50]}...'")
+    logger.error(f"Failed to translate HTML block after {translation_config['retries']} retries: '{html_block_to_translate[:70]}...'")
     return None
 
-def process_and_translate_text_content(
-    plain_text: str, client: OpenAI, from_lang: str, to_lang: str, config: Dict[str, Any]
-) -> str:
-    """Splits plain text, translates chunks, and reassembles them."""
-    logger.debug(f"process_and_translate_text_content: Input text: '{plain_text[:100]}...'")
-    if not plain_text.strip():
-        logger.debug("process_and_translate_text_content: Input text is empty or whitespace only. Returning original.")
-        return plain_text
+def split_html_into_large_blocks(html_content: str, max_tokens: int, model_name: str) -> List[str]:
+    """
+    Splits HTML content into blocks if it exceeds max_tokens.
+    WARNING: Current implementation is naive and may break HTML.
+    A robust HTML-aware splitter is needed for production if chapters frequently exceed token limits.
+    """
+    total_tokens = count_tokens(html_content, model_name)
+    logger.debug(f"split_html_into_large_blocks: Total tokens for HTML content: {total_tokens}, max_tokens_per_chunk: {max_tokens}")
 
-    openai_config = config.get("openai", DEFAULT_CONFIG["openai"])
-    chunks = split_plain_text_into_chunks(
-        plain_text, openai_config["max_tokens_per_chunk"], openai_config["model"], from_lang
+    if total_tokens <= max_tokens:
+        logger.debug("split_html_into_large_blocks: Entire HTML content fits in one block.")
+        return [html_content]
+
+    logger.warning(
+        f"HTML content (tokens: {total_tokens}) exceeds max_tokens_per_chunk ({max_tokens}). "
+        "Attempting a NAIVE character-based split. THIS IS VERY LIKELY TO BREAK HTML STRUCTURE. "
+        "The translated EPUB may be corrupted for this chapter. "
+        "Strongly consider increasing 'max_tokens_per_chunk' in config.yaml or implementing a "
+        "proper HTML-aware block splitting mechanism (e.g., splitting between major <div> or <p> tags)."
     )
-    logger.debug(f"process_and_translate_text_content: Generated {len(chunks)} chunks from plain text.")
-
-    if not chunks:
-        logger.debug("process_and_translate_text_content: No chunks generated. Returning original plain_text.")
-        return plain_text
-
-    translated_chunks = []
     
-    # Only show the chunk progress bar if there's more than one chunk AND we are not in deep debug mode
-    show_chunk_pbar = (len(chunks) > 1) and (logger.getEffectiveLevel() > logging.DEBUG)
+    # Extremely naive character-based split as a last resort placeholder.
+    # This does NOT respect HTML tags and will likely break them.
+    num_chunks_needed = (total_tokens + max_tokens - 1) // max_tokens # Ceiling division for token count
+    # Use character length for actual split, proportionally
+    estimated_chars_per_token = len(html_content) / total_tokens if total_tokens > 0 else 4 # Rough estimate
+    target_chars_per_chunk = int(max_tokens * estimated_chars_per_token * 0.95) # 0.95 for safety margin
 
-    chunk_iterator = tqdm(
-        chunks, 
-        desc="  ↪ Translating sub-chunks", 
-        unit="chk", 
+    if target_chars_per_chunk <=0: # Safety for very short content but high token count (unlikely)
+        target_chars_per_chunk = len(html_content) // num_chunks_needed if num_chunks_needed > 0 else len(html_content)
+
+
+    chunks = []
+    current_pos = 0
+    while current_pos < len(html_content):
+        end_pos = min(current_pos + target_chars_per_chunk, len(html_content))
+        # Try to find a space to split on, to avoid breaking mid-word, but still crude for HTML
+        # This is not a good way to split HTML.
+        if end_pos < len(html_content):
+            last_space = html_content.rfind(' ', current_pos, end_pos)
+            if last_space != -1 and last_space > current_pos : # if space found and not at the beginning
+                # A better check would be if this space is outside a tag. This is too simple.
+                # For now, just split at char count.
+                pass # Keeping it simple char split due to complexity of HTML-aware split here.
+
+        chunks.append(html_content[current_pos:end_pos])
+        current_pos = end_pos
+    
+    logger.debug(f"split_html_into_large_blocks: Naively split HTML into {len(chunks)} character-based blocks.")
+    return chunks
+
+def translate_html_chapter_content(
+    html_to_translate: str, 
+    client: OpenAI, 
+    from_lang: str, 
+    to_lang: str, 
+    config: Dict[str, Any]
+) -> str:
+    """
+    Manages splitting (if necessary) and translating the HTML content of a chapter.
+    """
+    openai_config = config.get("openai", DEFAULT_CONFIG["openai"])
+    max_tokens_for_html_chunk = openai_config["max_tokens_per_chunk"]
+    model_name = openai_config["model"]
+
+    html_blocks = split_html_into_large_blocks(html_to_translate, max_tokens_for_html_chunk, model_name)
+    
+    translated_html_pieces = []
+    num_blocks = len(html_blocks)
+
+    # Only show block progress bar if there's more than one block AND we are not in deep debug mode
+    show_block_pbar = (num_blocks > 1) and (logger.getEffectiveLevel() > logging.DEBUG)
+
+    block_iterator = tqdm(
+        html_blocks,
+        desc="  ↪ Translating HTML blocks", 
+        unit="block",
         leave=False, 
-        disable=not show_chunk_pbar,
+        disable=not show_block_pbar,
         bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]'
     )
 
-    for i, chunk in enumerate(chunk_iterator):
-        if not show_chunk_pbar and logger.getEffectiveLevel() <= logging.DEBUG:
-             logger.debug(f"    Processing chunk {i+1}/{len(chunks)} for text node: '{plain_text[:30]}...'")
-
-        translated_chunk = translate_single_text_chunk(client, chunk, from_lang, to_lang, config)
-        if translated_chunk is not None:
-            translated_chunks.append(translated_chunk)
-        else:
-            logger.error(f"Failed to translate chunk {i+1} from text node '{plain_text[:30]}...', using original: '{chunk[:50]}...'")
-            translated_chunks.append(chunk)
-
-    final_translation = " ".join(translated_chunks)
-    logger.debug(f"process_and_translate_text_content: Final reassembled translation for text node '{plain_text[:30]}...': '{final_translation[:100]}...'")
-    return final_translation
-
-def translate_html_element_content(
-    element: BeautifulSoup, client: OpenAI, from_lang: str, to_lang: str, config: Dict[str, Any]
-) -> None:
-    """Recursively traverses a BeautifulSoup element, translates text nodes, and preserves HTML structure."""
-    block_skip_tags = ['script', 'style', 'pre', 'code'] 
-    
-    element_name_for_log = "UnknownElementType"
-    if hasattr(element, 'name') and element.name:
-        element_name_for_log = element.name
-        if element.name in block_skip_tags:
-            logger.debug(f"Skipping translation for content of <{element.name}> tag.")
-            return
-    elif isinstance(element, NavigableString):
-        element_name_for_log = "NavigableStringWrapper"
-    
-    logger.debug(f"Processing element <{element_name_for_log}> for translation.")
-    
-    for content_item in list(element.contents): 
-        if isinstance(content_item, NavigableString):
-            original_text_node_content = str(content_item)
-            text_to_translate = original_text_node_content.strip() 
-            parent_name_for_log = element_name_for_log 
-            logger.debug(f"  Found NavigableString in <{parent_name_for_log}>. Original: '{original_text_node_content[:60]}...', Stripped for check: '{text_to_translate[:60]}...'")
-
-            if text_to_translate: 
-                logger.debug(f"    Attempting to translate stripped text: '{text_to_translate[:70]}...'")
-                translated_text_segment = process_and_translate_text_content(
-                    text_to_translate, client, from_lang, to_lang, config
-                )
-                logger.debug(f"    Received from translation processing: '{translated_text_segment[:70] if translated_text_segment else 'None/Empty'}'")
-
-                if translated_text_segment is not None and translated_text_segment != text_to_translate:
-                    new_node = NavigableString(translated_text_segment) 
-                    content_item.replace_with(new_node)
-                    logger.debug(f"    Replaced content in <{parent_name_for_log}> with translated text.")
-                elif translated_text_segment == text_to_translate:
-                    logger.debug(f"    Translation returned identical text. No replacement for: '{text_to_translate[:50]}...'")
-                else: 
-                    logger.warning(f"    Translation failed or returned empty for: '{text_to_translate[:50]}...'. Original content kept, or replaced with empty if API returned empty.")
-                    if translated_text_segment == "": 
-                        content_item.replace_with(NavigableString("")) 
-            else:
-                logger.debug(f"    Skipping translation for fully whitespace NavigableString: '{original_text_node_content[:60]}'")
+    for i, block in enumerate(block_iterator):
+        if not show_block_pbar and logger.getEffectiveLevel() <= logging.DEBUG:
+            logger.debug(f"    Translating HTML block {i+1}/{num_blocks}")
         
-        elif hasattr(content_item, 'name') and content_item.name: 
-            logger.debug(f"  Recursively calling translate_html_element_content for child <{content_item.name}>")
-            translate_html_element_content(content_item, client, from_lang, to_lang, config)
+        # Use the renamed translate_single_text_chunk which now expects HTML blocks
+        translated_piece = translate_single_text_chunk(client, block, from_lang, to_lang, config)
+        
+        if translated_piece is not None:
+            translated_html_pieces.append(translated_piece)
         else:
-            logger.debug(f"  Skipping non-Tag, non-NavigableString content_item: {type(content_item)} ('{str(content_item)[:60]}...')")
+            logger.error(f"Failed to translate HTML block {i+1}, using original content for this block.")
+            translated_html_pieces.append(block) # Fallback to original block
+            
+    return "".join(translated_html_pieces)
 
 def translate_epub(
     client: OpenAI, input_epub_path: str, output_epub_path: str, 
     from_lang: str, to_lang: str, config: Dict[str, Any],
     from_chapter_num: int = 1, to_chapter_num: int = float('inf')
 ) -> None:
-    """Translates content of an EPUB book and writes the output to a new file."""
+    """Translates content of an EPUB book using large HTML block strategy."""
     try:
         book = epub.read_epub(input_epub_path)
     except FileNotFoundError: 
@@ -422,11 +296,10 @@ def translate_epub(
         sys.exit(1)
 
     items_to_translate = [item for item in book.get_items_of_type(ebooklib.ITEM_DOCUMENT)]
-    total_chapters_in_book = len(items_to_translate) # Total in book
+    total_chapters_in_book = len(items_to_translate)
     logger.info(f"Found {total_chapters_in_book} document items (chapters/sections) in the EPUB.")
 
-    # Filter items based on user-specified chapter range for processing
-    chapters_to_process_tuples = [] # Store (original_index, item)
+    chapters_to_process_tuples = []
     for idx, item in enumerate(items_to_translate):
         user_facing_num = idx + 1
         if from_chapter_num <= user_facing_num <= to_chapter_num:
@@ -436,7 +309,6 @@ def translate_epub(
     
     if not chapters_to_process_tuples:
         logger.warning("No chapters fall within the specified --from-chapter and --to-chapter range.")
-        # Still try to write the book, which will be an identical copy if no chapters processed
         try:
             epub.write_epub(output_epub_path, book, {})
             logger.info(f"Output EPUB (no chapters translated) saved to: {output_epub_path}")
@@ -445,50 +317,76 @@ def translate_epub(
         return
 
     logger.info(f"Will attempt to translate {actual_chapters_to_process_count} chapters (from {from_chapter_num} to {min(to_chapter_num, total_chapters_in_book)}).")
+    processed_chapter_count = 0
 
-    processed_chapter_count = 0 # Counts successfully processed chapters in the current run
-
-    # --- TQDM MAIN CHAPTER PROGRESS BAR SETUP ---
     main_pbar = tqdm(
-        iterable=chapters_to_process_tuples, # Iterate over the pre-filtered list of (index, item)
-        total=actual_chapters_to_process_count, # Set total to the number of chapters we will process
+        iterable=chapters_to_process_tuples,
+        total=actual_chapters_to_process_count,
         desc="Translating Chapters", 
-        unit="chapter", 
-        disable=logger.getEffectiveLevel() > logging.INFO, # Disable if not INFO level or higher
-        smoothing=0.15, # More smoothing for ETA
+        unit="ch", 
+        disable=logger.getEffectiveLevel() > logging.INFO,
+        smoothing=0.15,
         bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]'
     )
-    # --- END OF TQDM SETUP ---
 
     for original_chapter_idx, item in main_pbar:
-        current_chapter_user_num = original_chapter_idx + 1 # User-facing number based on original index
-        
-        main_pbar.set_postfix_str(f"{item.get_name()[:25]}...", refresh=True) # Update for immediate display
-
-        # Log which chapter is being processed (user-facing number)
+        current_chapter_user_num = original_chapter_idx + 1
+        main_pbar.set_postfix_str(f"{item.get_name()[:25]}...", refresh=True)
         logger.info(f"Processing chapter {current_chapter_user_num}/{total_chapters_in_book} ('{item.get_name()}')...")
         
         try:
-            original_html_content = item.get_content().decode('utf-8', errors='replace')
-            soup = BeautifulSoup(original_html_content, 'html.parser')
+            original_full_html_content = item.get_content().decode('utf-8', errors='replace')
             
-            target_element_to_translate = soup.body if soup.body else soup
-            if target_element_to_translate:
-                target_element_name_for_log = target_element_to_translate.name if hasattr(target_element_to_translate, 'name') else 'document_root'
-                logger.debug(f"Chapter {current_chapter_user_num}: Translating content within <{target_element_name_for_log}>.")
-                translate_html_element_content(target_element_to_translate, client, from_lang, to_lang, config)
-                item.set_content(str(soup).encode('utf-8'))
-                logger.debug(f"Chapter {current_chapter_user_num}: Finished processing, content updated.")
-            else: 
-                logger.warning(f"Chapter {current_chapter_user_num} ('{item.get_name()}') has no 'body' tag or parsable root content to translate.")
+            # Try to isolate <body> content for translation, as sending full XHTML (with <head>)
+            # might confuse the LLM or be unnecessary.
+            soup_parser = BeautifulSoup(original_full_html_content, 'html.parser')
+            body_tag = soup_parser.body
+            
+            html_target_for_translation: str
+            is_body_translation = False
+
+            if body_tag:
+                # Extract the HTML string of the body's children
+                html_target_for_translation = "".join(str(child) for child in body_tag.contents)
+                is_body_translation = True
+                logger.debug(f"Chapter {current_chapter_user_num}: Extracted <body> content for translation.")
+            else:
+                # If no <body> tag found (e.g., it's an HTML fragment), translate the whole item content.
+                html_target_for_translation = original_full_html_content
+                is_body_translation = False
+                logger.debug(f"Chapter {current_chapter_user_num}: No <body> tag found, will translate entire item content.")
+
+            logger.debug(f"Chapter {current_chapter_user_num}: HTML content for translation (first 200 chars): {html_target_for_translation[:200]}...")
+
+            translated_html_content_for_target = translate_html_chapter_content(
+                html_target_for_translation, client, from_lang, to_lang, config
+            )
+            
+            # Reconstruct the chapter content
+            if is_body_translation and body_tag: # Make sure body_tag is not None
+                # Parse the translated HTML (which should be the content of the body)
+                # and replace the original body's children with these new children.
+                # This preserves the original <body> tag itself and its attributes.
+                translated_body_children_soup = BeautifulSoup(translated_html_content_for_target, 'html.parser')
+                body_tag.clear() # Remove old children from the original body_tag
+                for child_node in list(translated_body_children_soup.contents): # list() to copy
+                    body_tag.append(child_node) # Append new translated children
+                final_content_to_set = str(soup_parser) # Get the string of the modified original soup
+            else:
+                # If we translated the whole original content (no body was isolated)
+                final_content_to_set = translated_html_content_for_target
+            
+            item.set_content(final_content_to_set.encode('utf-8'))
+
+            logger.debug(f"Chapter {current_chapter_user_num}: Finished processing, content updated.")
             processed_chapter_count +=1
 
         except Exception as e: 
             logger.error(f"Error processing chapter {current_chapter_user_num} ('{item.get_name()}'): {e}", exc_info=True)
             logger.warning(f"Skipping translation for chapter {current_chapter_user_num} due to error.")
-            continue # Skip to next item in main_pbar
+            continue
 
-    if main_pbar: # Ensure bar is closed
+    if main_pbar:
         main_pbar.close()
 
     if processed_chapter_count == 0 and actual_chapters_to_process_count > 0 :
@@ -503,8 +401,9 @@ def translate_epub(
         logger.error(f"Error writing translated EPUB to '{output_epub_path}': {e}", exc_info=True)
         sys.exit(1)
 
+
+# --- show_chapters_info (remains the same as previous versions) ---
 def show_chapters_info(input_epub_path: str) -> None:
-    """Displays information about each chapter/document item in an EPUB book."""
     try:
         book = epub.read_epub(input_epub_path)
     except FileNotFoundError: 
@@ -574,7 +473,7 @@ def show_chapters_info(input_epub_path: str) -> None:
         logger.info(f"   Size (bytes): {char_count}")
         logger.info(f"   Preview: {content_preview}")
 
-# --- Main Execution ---
+# --- Main Execution (remains the same as previous versions) ---
 def main():
     parser = argparse.ArgumentParser(description='Translate EPUB books using AI or show chapter information.')
     parser.add_argument('--config', default='config.yaml', help='Path to YAML configuration file (default: config.yaml).')
@@ -608,13 +507,17 @@ def main():
     
     if args.mode == 'translate':
         configured_model = config.get("openai", {}).get("model", DEFAULT_CONFIG["openai"]["model"])
+        if not configured_model: # Check if model is missing or empty string
+             logger.critical("CRITICAL CONFIGURATION WARNING: No OpenAI model specified in configuration. Translation will fail.")
+             sys.exit(1) # Exit if no model is configured
+        # Specific check for the known problematic placeholder if it's still the default
         if configured_model == "gpt-4.1-mini" and DEFAULT_CONFIG["openai"]["model"] == "gpt-4.1-mini": 
             logger.critical(f"CRITICAL CONFIGURATION WARNING: The OpenAI model is effectively '{configured_model}' (from script default). "
                             "This is highly unlikely to be a valid public model name. "
                             "Translation will almost certainly fail. Please set a valid model (e.g., 'gpt-4o-mini') "
                             "in your config.yaml file or by editing DEFAULT_CONFIG in the script.")
-        elif not configured_model:
-             logger.critical("CRITICAL CONFIGURATION WARNING: No OpenAI model specified in configuration. Translation will fail.")
+        
+        logger.info(f"Using OpenAI model: {configured_model}") # Log the model being used
 
         if not api_key:
             logger.error("OpenAI API key not found. Set OPENAI_API_KEY environment variable or add to config.yaml.")
