@@ -27,11 +27,11 @@ except ImportError:
 DEFAULT_CONFIG = {
     "openai": {
         "api_key": None, 
-        "model": "gpt-4o-mini", 
+        "model": "gpt-4.1-mini", 
         "temperature": 0.4,
         # CRITICAL FOR THIS STRATEGY: Increase this significantly in your config.yaml!
         # e.g., 16000, 32000, or higher, up to model limits minus prompt/output.
-        "max_tokens_per_chunk": 4000, # Default is low for this strategy.
+        "max_tokens_per_chunk": 16000, # Default is low for this strategy.
         "request_timeout": 180, # Increased default timeout for potentially larger payloads
     },
     "translation_settings": {
